@@ -1,9 +1,20 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import Head from 'next/head';
-import axios from 'axios';
-import ReCAPTCHA from 'react-google-recaptcha';
-import { useRef, useState } from 'react';
-import { Col, Row, Container } from 'reactstrap';
+import Script from 'next/script';
+import { useState } from 'react';
+import {
+  Col,
+  Row,
+  Form,
+  Container,
+  Input,
+  Label,
+  FormGroup,
+  FormFeedback,
+  Button,
+} from 'reactstrap';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import Content from '../components/Content';
 import PageHead from '../components/PageHead';
 
@@ -49,16 +60,14 @@ const Contact = () => {
       pType,
       phase,
     };
-
-    Object.entries(tempRefs).forEach((data) => {
-      if (data[1].current.matches(':invalid')) {
+    for (const key in tempRefs) {
+      if (tempRefs[key].current.matches(':invalid')) {
         verified = false;
-        document.getElementById(`${data[0]}-error-banner`).style.display = 'inherit';
+        document.getElementById(`${key}-error-banner`).style.display = 'inherit';
       } else {
-        document.getElementById(`${data[0]}-error-banner`).style.display = 'none';
+        document.getElementById(`${key}-error-banner`).style.display = 'none';
       }
-    });
-
+    }
     if (!verified) {
       return;
     }
@@ -75,9 +84,8 @@ const Contact = () => {
     formData.append('description', descr.current.value);
 
     if (files) {
-      const tempArr = Array.from(files.keys());
-      for (let i = 0; i < tempArr.length; i += 1) {
-        formData.append(tempArr[i], files.get(tempArr[i]));
+      for (const key of files.keys()) {
+        formData.append(key, files.get(key));
       }
     }
 
@@ -87,21 +95,16 @@ const Contact = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-
       Array.from(document.getElementsByTagName('input')).forEach((r) => {
-        const m = r;
-        m.value = '';
+        r.value = '';
       });
       Array.from(document.getElementsByTagName('textarea')).forEach((f) => {
-        const q = f;
-        q.value = '';
+        f.value = '';
       });
       Array.from(document.getElementsByTagName('select')).forEach((g) => {
-        const y = g;
-        y.value = '';
+        g.value = '';
       });
       document.getElementById('divHubConfirmation').style.display = 'inherit';
-      document.getElementById('divGenericErrorBanner').style.display = 'none';
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error:', error);
@@ -114,290 +117,168 @@ const Contact = () => {
       <Head>
         <title>Contact Us | Sweeney Restoration</title>
         <meta property="og:title" content="Contact Us | Sweeney Restoration" key="title" />
-        <script type="text/javascript" src="scripts/fix.js" />
       </Head>
+      <Script src="https://www.google.com/recaptcha/api.js?render=6LcttdgZAAAAADqMr5udsQdCKWQies8zkPSiMZoi" />
       <PageHead title="Contact Us" img="contact.jpg" />
       <Container>
         <Row>
           <Col md={8} className="mb-4">
-            <Row>
-              <Col>
-                <label className="hub-label">Name*</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <input
-                  required
-                  id="fName"
-                  name="fName"
-                  type="text"
-                  className="hub-text-input"
-                  placeholder="First Name"
-                  ref={fName}
-                />
-                <div
-                  id="fName-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter your first name.</span>
-                </div>
-              </Col>
-              <Col>
-                <input
-                  required
-                  id="lName"
-                  name="lName"
-                  type="text"
-                  className="hub-text-input"
-                  placeholder="Last Name"
-                  ref={lName}
-                />
-                <div
-                  id="lName-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter your last name.</span>
-                </div>
-              </Col>
-            </Row>
-            <Row className="label-section">
-              <Col>
-                <label className="hub-label">Email*</label>
-              </Col>
-              <Col>
-                <label className="hub-label">Phone*</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <input required id="Email" type="email" className="hub-text-input" ref={Email} />
-                <div
-                  id="Email-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter a valid email address.</span>
-                </div>
-              </Col>
-              <Col>
-                <input required type="tel" id="Phone" className="hub-text-input" ref={Phone} />
-                <div
-                  id="Phone-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter your phone number.</span>
-                </div>
-              </Col>
-            </Row>
-            <Row className="label-section">
-              <Col>
-                <label className="hub-label">Project Phase*</label>
-              </Col>
-              <Col>
-                <label className="hub-label">Project Type*</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <select
-                  className="form-input form-select hub-text-input"
-                  name="phase"
-                  id="phase"
-                  ref={phase}
-                  required
-                >
-                  <option className="select-option select-default" value="">
-                    {' '}
-                    -- Select Phase --{' '}
-                  </option>
-                  <option className="select-option" value="Idea/Design">
-                    Idea/Design
-                  </option>
-                  <option className="select-option" value="Architecture in Process">
-                    Architecture in Process
-                  </option>
-                  <option className="select-option" value="Building Plans Complete">
-                    Building Plans Complete
-                  </option>
-                  <option className="select-option" value="Other">
-                    Other
-                  </option>
-                </select>
-                <div
-                  id="phase-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please select the phase for your project.</span>
-                </div>
-              </Col>
-              <Col>
-                <select
-                  className="form-input form-select hub-text-input"
-                  name="pType"
-                  id="pType"
-                  ref={pType}
-                  required
-                >
-                  <option className="select-option select-default" value="">
-                    {' '}
-                    -- Select Type --{' '}
-                  </option>
-                  <option className="select-option" value="New Construction">
-                    New Construction
-                  </option>
-                  <option className="select-option" value="Complete Renovation">
-                    Complete Renovation
-                  </option>
-                  <option className="select-option" value="Partial Renovation">
-                    Partial Renovation
-                  </option>
-                  <option className="select-option" value="Addition">
-                    Addition
-                  </option>
-                  <option className="select-option" value="Commercial">
-                    Commercial
-                  </option>
-                  <option className="select-option" value="Other">
-                    Other
-                  </option>
-                </select>
-                <div
-                  id="pType-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please select the type for your project.</span>
-                </div>
-              </Col>
-            </Row>
-            <Row className="label-section">
-              <Col>
-                <label className="hub-label">Project Address*</label>
-              </Col>
-              <Col>
-                <label className="hub-label">Architecture Firm</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <input required type="text" id="pAddr" className="hub-text-input" ref={pAddr} />
-                <div
-                  id="pAddr-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter your project's address.</span>
-                </div>
-              </Col>
-              <Col>
-                <input type="text" id="firmN" className="hub-text-input" ref={firmN} />
-              </Col>
-            </Row>
-            <Row className="label-section">
-              <Col>
-                <label className="hub-label">Project Description*</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <textarea
-                  required
-                  id="descr"
-                  type="text"
-                  className="hub-text-input"
-                  maxLength="1000"
-                  ref={descr}
-                />
-                <div
-                  id="descr-error-banner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>Please enter a description of your project.</span>
-                </div>
-              </Col>
-            </Row>
-            <Row className="label-section">
-              <Col>
-                <label className="hub-label">Project Files</label>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <input
-                  name="file"
-                  className="hub-text-input file-input"
-                  id="pPlans"
-                  type="file"
-                  accept=".xlsx,.xls,image/*,.doc,.docx,.ppt,.pptx,.txt,.pdf,.rtf"
-                  multiple
-                  onInput={(e) => {
-                    if (Array.from(e.target.files).length) {
-                      const temp = new FormData();
-                      Array.from(e.target.files).forEach((f, i) =>
-                        temp.append(`file-${i}`, f, f.name),
-                      );
-                      setFiles(temp);
-                    } else {
-                      setFiles(null);
-                    }
-                  }}
-                />
-              </Col>
-            </Row>
-            <Row className="input-row">
-              <Col>
-                <input
-                  disabled={reCapVer}
-                  type="button"
-                  id="btnLeadIntakeSubmit"
-                  className="hub-button"
-                  value="Submit"
-                  onClick={handleSubmit}
-                />
-                <div
-                  id="divGenericErrorBanner"
-                  className="hub-error-banner"
-                  style={{ display: 'none' }}
-                >
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <span>This form can't be submitted. Try again later.</span>
-                </div>
-              </Col>
-              <Col>
-                <ReCAPTCHA
-                  sitekey="6LfeWvAnAAAAAB5OsAVVPNK6-30UuBi4hoL2PNRR"
-                  ref={reCap}
-                  onChange={verify}
-                  id="reCAPTCHA"
-                />
-              </Col>
-            </Row>
-            <div id="divHubConfirmation" style={{ display: 'none' }}>
-              <div className="hub-confirmation-icon">
-                <svg width="132" height="132" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M66 132A66 66 0 1 1 66 0a66 66 0 0 1 0 132zm0-2A64 64 0 1 0 66 2a64 64 0 0 0 0 128zm-9.9-45.5l39-38.9 1.3 1.5-40.3 40.3-19.5-19.6 1.4-1.4L56 84.5z"
-                    fill="currentColor"
-                    fillRule="nonzero"
+            {error ? <p className="text-danger">An error occurred please try again.</p> : null}
+            {success ? (
+              <h3>Thank you for contacting Sweeney Restoration. We will contact you shortly.</h3>
+            ) : (
+              <Form onSubmit={formik.handleSubmit}>
+                <Row>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="firstName">First name</Label>
+                    <Input
+                      required
+                      name="firstName"
+                      id="firstName"
+                      invalid={!!(formik.touched.firstName && formik.errors.firstName)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      value={formik.values.firstName}
+                    />
+                    <FormFeedback>Please enter your first name.</FormFeedback>
+                  </FormGroup>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="lastName">Last name</Label>
+                    <Input
+                      required
+                      name="lastName"
+                      id="lastName"
+                      invalid={!!(formik.touched.lastName && formik.errors.lastName)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                    <FormFeedback>Please enter your last name.</FormFeedback>
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="email">Email</Label>
+                    <Input
+                      required
+                      name="email"
+                      id="email"
+                      invalid={!!(formik.touched.email && formik.errors.email)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                    <FormFeedback>Please enter a valid email address.</FormFeedback>
+                  </FormGroup>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="phone">Phone</Label>
+                    <Input
+                      required
+                      type="tel"
+                      name="phone"
+                      id="phone"
+                      invalid={!!(formik.touched.phone && formik.errors.phone)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                    <FormFeedback>Please enter your phone number.</FormFeedback>
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="projectPhase">Project Phase</Label>
+                    <Input
+                      type="select"
+                      name="projectPhase"
+                      id="projectPhase"
+                      invalid={!!(formik.touched.projectPhase && formik.errors.projectPhase)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    >
+                      <option value="">-- Select Phase --</option>
+                      <option>Idea/Design</option>
+                      <option>Architecture in Process</option>
+                      <option>Building Plans Complete</option>
+                      <option>Other</option>
+                    </Input>
+                    <FormFeedback>Please select the phase for your project.</FormFeedback>
+                  </FormGroup>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="projectType">Project Type</Label>
+                    <Input
+                      type="select"
+                      name="projectType"
+                      id="projectType"
+                      invalid={!!(formik.touched.projectType && formik.errors.projectType)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    >
+                      <option value="">-- Select Type --</option>
+                      <option>New Construction</option>
+                      <option>Complete Renovation</option>
+                      <option>Partial Renovation</option>
+                      <option>Addition</option>
+                      <option>Commercial</option>
+                      <option>Other</option>
+                    </Input>
+                    <FormFeedback>Please select the project type.</FormFeedback>
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="address">Project address</Label>
+                    <Input
+                      required
+                      name="address"
+                      id="address"
+                      invalid={!!(formik.touched.address && formik.errors.address)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                    <FormFeedback>Please enter your project&apos;s address.</FormFeedback>
+                  </FormGroup>
+                  <FormGroup className="flex-grow-1 mx-2">
+                    <Label for="firm">Architecture Firm</Label>
+                    <Input
+                      name="firm"
+                      id="firm"
+                      invalid={!!(formik.touched.firm && formik.errors.firm)}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                  </FormGroup>
+                </Row>
+                <FormGroup className="flex-grow-1">
+                  <Label for="description">Project description</Label>
+                  <Input
+                    name="description"
+                    id="description"
+                    type="textarea"
+                    invalid={!!(formik.touched.description && formik.errors.description)}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                   />
-                </svg>
-              </div>
-              <span>Your message has been sent.</span>
-            </div>
+                </FormGroup>
+                <FormGroup>
+                  <Label for="exampleFile">Project Files</Label>
+                  <Input
+                    id="exampleFile"
+                    name="file"
+                    type="file"
+                    multiple
+                    accept=".xlsx,.xls,image/*,.doc,.docx,.ppt,.pptx,.txt,.pdf,.rtf"
+                    onChange={(e) => formik.setFieldValue('attachments', e.target.files)}
+                  />
+                </FormGroup>
+                <Button
+                  type="submit"
+                  block
+                  className="mb-4"
+                  aria-busy={formik.isSubmitting}
+                  disabled={formik.isSubmitting}
+                >
+                  Submit
+                </Button>
+              </Form>
+            )}
           </Col>
           <Col md={4}>
             <Content title="Office Hours">
@@ -427,6 +308,6 @@ const Contact = () => {
       </Container>
     </div>
   );
-};
+}
 
 export default Contact;
